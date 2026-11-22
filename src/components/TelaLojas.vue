@@ -7,7 +7,9 @@ import CartaoSugestao from "./CartaoSugestao.vue";
 import DialogoLoja from "./DialogoLoja.vue";
 import * as api from "../services/api.js";
 import {
+  aplicarPendencias,
   categoriaPorId,
+  guardarLoja,
   lojas,
   quantidadeSugestoes,
   recarregarLojas,
@@ -35,10 +37,13 @@ recarregarSugestoes();
 const aberta = ref(null);
 const chaveDe = (s) => `${s.tipo}:${s.lojaId ?? ""}:${s.padrao.tipo}:${s.padrao.texto}`;
 // Uma resolvida some da lista; abre a seguinte para seguir no mesmo ritmo.
-async function resolvida(s) {
+// A resposta da API diz quais compras saíram das pendentes: a lista é acertada aqui, sem
+// reler as sugestões (cada leitura passa por todas as compras sem loja).
+async function resolvida(s, { loja, pendencias }) {
   const lista = sugestoes.value ?? [];
   const proxima = lista[lista.findIndex((x) => chaveDe(x) === chaveDe(s)) + 1];
-  await Promise.all([recarregarLojas(), recarregarSugestoes()]);
+  if (loja) guardarLoja(loja);
+  await aplicarPendencias(pendencias);
   aberta.value = proxima && sugestoes.value?.some((x) => chaveDe(x) === chaveDe(proxima)) ? chaveDe(proxima) : null;
 }
 
@@ -52,9 +57,9 @@ const lojasVisiveis = computed(() => {
     .sort((a, b) => a.nome.localeCompare(b.nome));
 });
 
-async function lojaAlterada() {
+async function lojaAlterada(resposta) {
   editando.value = null;
-  await Promise.all([recarregarLojas(), recarregarSugestoes()]);
+  await Promise.all([recarregarLojas(), aplicarPendencias(resposta?.pendencias)]);
 }
 
 // ---------- ignoradas ----------
@@ -76,7 +81,7 @@ async function desfazer(i) {
   try {
     const resposta = await api.desfazerIgnorado(i.estabelecimento);
     avisar(`${i.estabelecimento} voltou: ${plural(resposta.comprasAtualizadas, "compra atualizada", "compras atualizadas")}.`);
-    await Promise.all([carregarIgnorados(), recarregarSugestoes()]);
+    await Promise.all([carregarIgnorados(), aplicarPendencias(resposta.pendencias)]);
   } catch (erro) {
     avisarErro(erro);
   }
@@ -117,7 +122,7 @@ async function desfazer(i) {
           :sugestao="s"
           :aberta="aberta === chaveDe(s)"
           @abrir="aberta = aberta === chaveDe(s) ? null : chaveDe(s)"
-          @resolvida="resolvida(s)"
+          @resolvida="(resposta) => resolvida(s, resposta)"
         />
       </ul>
     </template>

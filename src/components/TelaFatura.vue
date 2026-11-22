@@ -5,7 +5,7 @@ import { computed, ref, watch } from "vue";
 import Icone from "./Icone.vue";
 import ResumoCompras from "./ResumoCompras.vue";
 import * as api from "../services/api.js";
-import { nomeDoCartao, recarregarFaturas, recarregarSugestoes } from "../composables/useDados.js";
+import { nomeDoCartao, recarregarFaturas, recarregarContagem } from "../composables/useDados.js";
 import { substituir } from "../composables/useRota.js";
 import { avisar, avisarErro } from "../composables/useAviso.js";
 import { competenciaCurta, competenciaLonga, dataCurta, dataHora, dinheiro, hoje, lerDinheiro, plural } from "../formatar.js";
@@ -69,7 +69,7 @@ async function excluirFatura() {
   try {
     await api.excluirFatura(f.id);
     await recarregarFaturas();
-    recarregarSugestoes();
+    recarregarContagem();
     avisar("Fatura excluída.");
     substituir("/faturas");
   } catch (erro) {
@@ -101,7 +101,7 @@ async function criar() {
     dialogoNova.value.close();
     avisar("Compra incluída.");
     await atualizarTotais();
-    recarregarSugestoes();
+    recarregarContagem();
   } catch (erro) {
     avisarErro(erro);
   } finally {

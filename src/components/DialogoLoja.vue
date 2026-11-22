@@ -53,7 +53,7 @@ watch(
     clearTimeout(espera);
     resultado.value = null;
     if (!props.loja || !padroesMudaram.value || !validos.value.length) return;
-    espera = setTimeout(conferir, 400);
+    espera = setTimeout(conferir, 800);
   }
 );
 
@@ -89,7 +89,7 @@ async function salvar() {
     }
     const n = resposta.comprasAtualizadas;
     avisar(`Loja ${resposta.loja.nome} ${nova.value ? "criada" : "salva"}${n ? `: ${plural(n, "compra atualizada", "compras atualizadas")}` : ""}.`);
-    emit("alterada");
+    emit("alterada", resposta);
   } catch (erro) {
     avisarErro(erro);
   } finally {
@@ -108,7 +108,7 @@ async function juntar() {
   try {
     const resposta = await api.juntarLojas(props.loja.id, origem.id);
     avisar(`${origem.nome} juntada a ${resposta.loja.nome}.`);
-    emit("alterada");
+    emit("alterada", resposta);
   } catch (erro) {
     avisarErro(erro);
   } finally {
@@ -122,7 +122,7 @@ async function excluir() {
   try {
     const resposta = await api.excluirLoja(props.loja.id);
     avisar(`Loja excluída: ${plural(resposta.comprasAtualizadas, "compra ficou", "compras ficaram")} sem loja.`);
-    emit("alterada");
+    emit("alterada", resposta);
   } catch (erro) {
     avisarErro(erro);
   } finally {

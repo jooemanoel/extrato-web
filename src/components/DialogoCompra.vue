@@ -5,7 +5,7 @@
 import { computed, ref, watch } from "vue";
 import Icone from "./Icone.vue";
 import * as api from "../services/api.js";
-import { lojas, nomeDoCartao, recarregarSugestoes } from "../composables/useDados.js";
+import { lojas, nomeDoCartao, recarregarContagem } from "../composables/useDados.js";
 import { ir } from "../composables/useRota.js";
 import { avisar, avisarErro } from "../composables/useAviso.js";
 import { dataCurta, dinheiro, dinheiroAbsoluto, lerDinheiro } from "../formatar.js";
@@ -71,7 +71,7 @@ async function salvar() {
   try {
     const alterada = await api.alterarCompra(props.compra.id, campos);
     emit("alterada", alterada);
-    if ("lojaId" in campos) recarregarSugestoes();
+    if ("lojaId" in campos) recarregarContagem();
     avisar("Compra alterada.");
   } catch (erro) {
     avisarErro(erro);
@@ -89,7 +89,7 @@ async function excluir() {
   try {
     await api.excluirCompra(c.id);
     emit("excluida", c);
-    recarregarSugestoes();
+    recarregarContagem();
     avisar("Compra excluída.");
   } catch (erro) {
     avisarErro(erro);

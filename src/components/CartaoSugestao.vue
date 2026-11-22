@@ -54,25 +54,32 @@ const padroesFinais = computed(() =>
   modo.value === "adicionar" && loja.value ? [...loja.value.padroes, padrao.value] : [padrao.value]
 );
 
-// Prévia automática só no cartão aberto (cada uma relê as suas compras no servidor).
+// Prévia automática só no cartão aberto (cada uma relê compras no servidor). Espera a pessoa
+// parar de digitar, e um padrão já conferido neste cartão não é pedido de novo.
 let espera;
+const previas = new Map(); // chave do pedido -> resultado
+const pedidoDaPrevia = () => ({
+  padroes: padroesFinais.value,
+  lojaId: modo.value === "adicionar" ? lojaId.value : undefined,
+});
 watch(
   () => [props.aberta, modo.value, lojaId.value, padrao.value.tipo, padrao.value.texto],
   () => {
     clearTimeout(espera);
     if (!props.aberta || !padraoValido.value || (modo.value === "adicionar" && !loja.value)) return;
-    espera = setTimeout(conferir, 400);
+    const guardada = previas.get(JSON.stringify(pedidoDaPrevia()));
+    if (guardada) return (resultado.value = guardada);
+    espera = setTimeout(conferir, 800);
   },
   { immediate: true }
 );
 
 async function conferir() {
+  const pedido = pedidoDaPrevia();
   conferindo.value = true;
   try {
-    resultado.value = await api.previaLoja({
-      padroes: padroesFinais.value,
-      lojaId: modo.value === "adicionar" ? lojaId.value : undefined,
-    });
+    resultado.value = await api.previaLoja(pedido);
+    previas.set(JSON.stringify(pedido), resultado.value);
   } catch (erro) {
     resultado.value = null;
     avisarErro(erro);
@@ -104,7 +111,7 @@ async function aplicar() {
       resposta = await api.alterarLoja(lojaId.value, { padroes: padroesFinais.value });
       avisar(`Padrão acrescentado a ${resposta.loja.nome}: ${plural(resposta.comprasAtualizadas, "compra atualizada", "compras atualizadas")}.`);
     }
-    emit("resolvida");
+    emit("resolvida", { loja: resposta.loja, pendencias: resposta.pendencias });
   } catch (erro) {
     // Já existe loja com esse nome: oferece acrescentar o padrão a ela.
     if (erro.status === 409 && erro.detalhes?.lojaId) {
@@ -126,9 +133,14 @@ async function ignorarTodos() {
   if (!confirm(texto)) return;
   enviando.value = true;
   try {
-    for (const e of s.estabelecimentos) await api.ignorar(e);
+    const pendencias = { resolvidas: [], novas: 0 };
+    for (const e of s.estabelecimentos) {
+      const resposta = await api.ignorar(e);
+      pendencias.resolvidas.push(...resposta.pendencias.resolvidas);
+      pendencias.novas += resposta.pendencias.novas;
+    }
     avisar("Ignorado. Dá para desfazer na aba Ignoradas.");
-    emit("resolvida");
+    emit("resolvida", { loja: null, pendencias });
   } catch (erro) {
     avisarErro(erro);
   } finally {

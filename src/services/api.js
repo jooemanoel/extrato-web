@@ -81,6 +81,8 @@ export const excluirCompra = (compraId) => chamar("DELETE", `/compras/${id(compr
 // Lojas (compartilhadas entre os usuários)
 export const buscarLojas = () => chamar("GET", "/lojas");
 export const buscarSugestoes = () => chamar("GET", "/lojas/sugestoes");
+/** { quantidade } de compras sem loja: barato (não lê as compras). */
+export const contarPendentes = () => chamar("GET", "/lojas/sugestoes/contagem");
 /** { padroes, lojaId? } -> { captura, tomadasDeOutrasLojas, perdidas, conflitos } */
 export const previaLoja = (dados) => chamar("POST", "/lojas/previa", dados);
 export const criarLoja = (dados) => chamar("POST", "/lojas", dados);
