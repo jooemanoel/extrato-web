@@ -8,9 +8,11 @@ import TelaFaturas from "./components/TelaFaturas.vue";
 import TelaFatura from "./components/TelaFatura.vue";
 import TelaImportar from "./components/TelaImportar.vue";
 import TelaLojas from "./components/TelaLojas.vue";
+import AvisoConexao from "./components/AvisoConexao.vue";
 import { encerrarSessao, usuario } from "./composables/useSessao.js";
 import { rota } from "./composables/useRota.js";
-import { carregarTudo, descarregar } from "./composables/useDados.js";
+import { aEnviar, apagarDoAparelho, encerrar, iniciar } from "./composables/useDados.js";
+import { plural } from "./formatar.js";
 import { aviso } from "./composables/useAviso.js";
 
 const tituloFatura = ref("");
@@ -31,22 +33,32 @@ const titulo = computed(() => {
   }
 });
 
-// Ao entrar (ou abrir o app já logado), carrega o que as telas usam. Ao sair ou
-// expirar a sessão, esquece tudo.
+// Ao entrar (ou abrir o app já logado), mostra o que o aparelho guardou e sincroniza.
+// Se a sessão vence, os dados somem da tela mas continuam no aparelho (com as alterações
+// ainda não enviadas): ao entrar de novo com o mesmo usuário, voltam.
 watch(
   usuario,
   (atual, anterior) => {
     if (atual?.id === anterior?.id) return;
-    descarregar();
-    if (atual) carregarTudo();
+    encerrar();
+    if (atual) iniciar(atual.id);
   },
   { immediate: true }
 );
 
 watch(titulo, (t) => (document.title = t === "Extrato" ? "Extrato" : `${t} · Extrato`), { immediate: true });
 
-function sair() {
+/** Sair apaga do aparelho os dados desta conta. */
+async function sair() {
+  const n = aEnviar.value;
+  const texto = n
+    ? `${plural(n, "alteração ainda não foi enviada", "alterações ainda não foram enviadas")} ao servidor ` +
+      "e vai se perder. Sair mesmo assim?"
+    : "Sair? As faturas guardadas neste aparelho são apagadas (voltam ao entrar de novo, com internet).";
+  if (!confirm(texto)) return;
+  const id = usuario.value.id;
   encerrarSessao();
+  await apagarDoAparelho(id);
   location.hash = "";
 }
 </script>
@@ -55,6 +67,7 @@ function sair() {
   <BarraSuperior :titulo="titulo" :logado="!!usuario" @sair="sair" />
 
   <main class="conteudo">
+    <AvisoConexao v-if="usuario" />
     <TelaLogin v-if="!usuario" />
     <TelaFaturas v-else-if="rota.tela === 'faturas'" />
     <TelaFatura v-else-if="rota.tela === 'fatura'" :id="rota.id" :key="rota.id" @titulo="tituloFatura = $event" />

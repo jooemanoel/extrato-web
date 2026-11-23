@@ -1,7 +1,8 @@
 // Sessão do usuário: o token (JWT) emitido pela extrato-api e o nome para exibir.
 //
-// Diferente do app antigo, nada sensível fica no aparelho: nem senha, nem dados
-// que deem acesso a outra conta. O token é assinado pela API; alterá-lo o invalida.
+// A senha nunca fica no aparelho, nem nada que dê acesso a outra conta. O token é
+// assinado pela API; alterá-lo o invalida. (As faturas e compras ficam guardadas para
+// o modo offline: ver composables/useDados.js.)
 import { computed, ref } from "vue";
 
 const CHAVE = "extrato-sessao";
@@ -35,6 +36,12 @@ export function iniciarSessao({ token, usuario }) {
   try {
     localStorage.setItem(CHAVE, JSON.stringify(sessao.value));
   } catch {}
+}
+
+/** A API mandou um token novo (o atual estava perto de vencer): troca sem sair. */
+export function renovarToken(novo) {
+  if (!sessao.value) return;
+  iniciarSessao({ ...sessao.value, token: novo });
 }
 
 export function encerrarSessao() {

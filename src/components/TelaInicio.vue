@@ -1,13 +1,11 @@
 <script setup>
 // Início: o mês (competência = mês de vencimento) com as faturas de todos os cartões
 // somadas, o gasto por categoria e as compras.
-import { computed, ref, watch } from "vue";
+import { computed } from "vue";
 import Icone from "./Icone.vue";
 import ResumoCompras from "./ResumoCompras.vue";
-import * as api from "../services/api.js";
-import { faturas, nomeDoCartao, quantidadeSugestoes, recarregarFaturas } from "../composables/useDados.js";
+import { compras as todasAsCompras, faturas, nomeDoCartao, quantidadeSugestoes } from "../composables/useDados.js";
 import { caminhoFatura, ir } from "../composables/useRota.js";
-import { avisarErro } from "../composables/useAviso.js";
 import { competenciaLonga, dinheiro, plural } from "../formatar.js";
 
 const props = defineProps({ mes: { type: String, default: null } });
@@ -19,36 +17,12 @@ const anterior = computed(() => competencias.value[indice.value + 1] ?? null);
 const seguinte = computed(() => (indice.value > 0 ? competencias.value[indice.value - 1] : null));
 
 const doMes = computed(() => (faturas.value ?? []).filter((f) => f.competencia === mesAtual.value));
-const compras = ref(null);
 
-// Recarrega quando muda o mês ou quando alguma fatura do mês foi atualizada (importação).
-const versao = computed(() => doMes.value.map((f) => `${f.id}@${f.atualizadoEm}`).join("|"));
-let pedido = 0;
-watch(
-  versao,
-  async () => {
-    const meu = ++pedido;
-    if (!doMes.value.length) return (compras.value = []);
-    compras.value = null;
-    try {
-      const respostas = await Promise.all(doMes.value.map((f) => api.buscarFatura(f.id)));
-      if (meu === pedido) compras.value = respostas.flatMap((r) => r.compras);
-    } catch (erro) {
-      avisarErro(erro);
-    }
-  },
-  { immediate: true }
-);
-
-function alterada(compra) {
-  compras.value = compras.value.map((c) => (c.id === compra.id ? compra : c));
-  if (compra.origem === "manual") recarregarFaturas(); // valor pode ter mudado o total
-}
-
-function excluida(compra) {
-  compras.value = compras.value.filter((c) => c.id !== compra.id);
-  recarregarFaturas();
-}
+// As compras ficam no aparelho: trocar de mês não pede nada ao servidor.
+const compras = computed(() => {
+  const ids = new Set(doMes.value.map((f) => f.id));
+  return todasAsCompras.value.filter((c) => ids.has(c.faturaId));
+});
 </script>
 
 <template>
@@ -97,7 +71,6 @@ function excluida(compra) {
       </span>
     </button>
 
-    <p v-if="compras === null" class="vazio">Carregando compras…</p>
-    <ResumoCompras v-else :compras="compras" :mostrar-cartao="doMes.length > 1" @alterada="alterada" @excluida="excluida" />
+    <ResumoCompras :compras="compras" :mostrar-cartao="doMes.length > 1" />
   </template>
 </template>

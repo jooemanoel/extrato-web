@@ -9,11 +9,10 @@ import * as api from "../services/api.js";
 import {
   aplicarPendencias,
   categoriaPorId,
-  guardarLoja,
   lojas,
   quantidadeSugestoes,
-  recarregarLojas,
   recarregarSugestoes,
+  sincronizar,
   sugestoes,
 } from "../composables/useDados.js";
 import { substituir } from "../composables/useRota.js";
@@ -30,7 +29,8 @@ const ABAS = [
 ];
 
 // Ao abrir a tela, atualiza: outro usuário pode ter mexido nas lojas.
-recarregarLojas();
+// Lojas e compras vêm pela sincronização; as sugestões, só da API (precisam de internet).
+sincronizar();
 recarregarSugestoes();
 
 // ---------- sugestões ----------
@@ -38,12 +38,12 @@ const aberta = ref(null);
 const chaveDe = (s) => `${s.tipo}:${s.lojaId ?? ""}:${s.padrao.tipo}:${s.padrao.texto}`;
 // Uma resolvida some da lista; abre a seguinte para seguir no mesmo ritmo.
 // A resposta da API diz quais compras saíram das pendentes: a lista é acertada aqui, sem
-// reler as sugestões (cada leitura passa por todas as compras sem loja).
-async function resolvida(s, { loja, pendencias }) {
+// reler as sugestões (cada leitura passa por todas as compras sem loja). A loja nova e as
+// compras reconhecidas chegam ao aparelho pela sincronização.
+async function resolvida(s, { pendencias }) {
   const lista = sugestoes.value ?? [];
   const proxima = lista[lista.findIndex((x) => chaveDe(x) === chaveDe(s)) + 1];
-  if (loja) guardarLoja(loja);
-  await aplicarPendencias(pendencias);
+  await Promise.all([aplicarPendencias(pendencias), sincronizar()]);
   aberta.value = proxima && sugestoes.value?.some((x) => chaveDe(x) === chaveDe(proxima)) ? chaveDe(proxima) : null;
 }
 
@@ -59,7 +59,7 @@ const lojasVisiveis = computed(() => {
 
 async function lojaAlterada(resposta) {
   editando.value = null;
-  await Promise.all([recarregarLojas(), aplicarPendencias(resposta?.pendencias)]);
+  await Promise.all([sincronizar(), aplicarPendencias(resposta?.pendencias)]);
 }
 
 // ---------- ignoradas ----------
@@ -81,7 +81,7 @@ async function desfazer(i) {
   try {
     const resposta = await api.desfazerIgnorado(i.estabelecimento);
     avisar(`${i.estabelecimento} voltou: ${plural(resposta.comprasAtualizadas, "compra atualizada", "compras atualizadas")}.`);
-    await Promise.all([carregarIgnorados(), aplicarPendencias(resposta.pendencias)]);
+    await Promise.all([carregarIgnorados(), aplicarPendencias(resposta.pendencias), sincronizar()]);
   } catch (erro) {
     avisarErro(erro);
   }

@@ -5,7 +5,7 @@ import { computed, ref, watch } from "vue";
 import Icone from "./Icone.vue";
 import ResumoCompras from "./ResumoCompras.vue";
 import * as api from "../services/api.js";
-import { nomeDoCartao, recarregarFaturas, recarregarContagem } from "../composables/useDados.js";
+import { compras as todasAsCompras, criarCompra, faturas, nomeDoCartao, sincronizar } from "../composables/useDados.js";
 import { substituir } from "../composables/useRota.js";
 import { avisar, avisarErro } from "../composables/useAviso.js";
 import { competenciaCurta, competenciaLonga, dataCurta, dataHora, dinheiro, hoje, lerDinheiro, plural } from "../formatar.js";
@@ -13,21 +13,10 @@ import { competenciaCurta, competenciaLonga, dataCurta, dataHora, dinheiro, hoje
 const props = defineProps({ id: { type: String, required: true } });
 const emit = defineEmits(["titulo"]);
 
-const fatura = ref(null);
-const compras = ref(null);
-const naoEncontrada = ref(false);
-
-async function carregar() {
-  try {
-    const resposta = await api.buscarFatura(props.id);
-    fatura.value = resposta.fatura;
-    compras.value = resposta.compras;
-  } catch (erro) {
-    if (erro.status === 404) naoEncontrada.value = true;
-    else avisarErro(erro);
-  }
-}
-carregar();
+// Tudo vem do aparelho (modo offline); os totais já incluem o que ainda não foi enviado.
+const fatura = computed(() => faturas.value?.find((f) => f.id === props.id) ?? null);
+const compras = computed(() => todasAsCompras.value.filter((c) => c.faturaId === props.id));
+const naoEncontrada = computed(() => faturas.value !== null && !fatura.value);
 
 watch(fatura, (f) => emit("titulo", f ? `${nomeDoCartao(f.cartaoId)} · ${competenciaCurta(f.competencia)}` : ""), {
   immediate: true,
@@ -43,22 +32,7 @@ const periodo = computed(() =>
   fatura.value?.inicio ? `${dataCurta(fatura.value.inicio, { comAno: true })} a ${dataCurta(fatura.value.fim, { comAno: true })}` : ""
 );
 
-function alterada(compra) {
-  compras.value = compras.value.map((c) => (c.id === compra.id ? compra : c));
-  if (compra.origem === "manual") atualizarTotais();
-}
-
-function excluida(compra) {
-  compras.value = compras.value.filter((c) => c.id !== compra.id);
-  atualizarTotais();
-}
-
-/** Os totais da fatura mudam no servidor; relê a fatura e a lista. */
-async function atualizarTotais() {
-  await carregar();
-  recarregarFaturas();
-}
-
+/** Precisa de internet: a fatura e as compras somem do servidor e, em seguida, do aparelho. */
 async function excluirFatura() {
   const f = fatura.value;
   const texto =
@@ -68,10 +42,9 @@ async function excluirFatura() {
   if (!confirm(texto)) return;
   try {
     await api.excluirFatura(f.id);
-    await recarregarFaturas();
-    recarregarContagem();
-    avisar("Fatura excluída.");
     substituir("/faturas");
+    await sincronizar();
+    avisar("Fatura excluída.");
   } catch (erro) {
     avisarErro(erro);
   }
@@ -80,33 +53,25 @@ async function excluirFatura() {
 // ---------- compra digitada à mão ----------
 const dialogoNova = ref(null);
 const nova = ref({ data: "", valor: "", descricao: "", estorno: false });
-const enviando = ref(false);
 
 function abrirNova() {
   nova.value = { data: hoje(), valor: "", descricao: "", estorno: false };
   dialogoNova.value.showModal();
 }
 
-async function criar() {
+/** Funciona offline: a compra aparece na hora e vai para o servidor quando der. */
+function criar() {
   const centavos = lerDinheiro(nova.value.valor);
   if (!centavos) return avisar("Informe um valor válido, como 12,34.", "erro");
-  enviando.value = true;
-  try {
-    await api.criarCompra({
-      faturaId: fatura.value.id,
-      data: nova.value.data,
-      valor: nova.value.estorno ? centavos : -centavos,
-      descricao: nova.value.descricao,
-    });
-    dialogoNova.value.close();
-    avisar("Compra incluída.");
-    await atualizarTotais();
-    recarregarContagem();
-  } catch (erro) {
-    avisarErro(erro);
-  } finally {
-    enviando.value = false;
-  }
+  if (!nova.value.descricao.trim()) return avisar("Informe a descrição.", "erro");
+  criarCompra({
+    faturaId: fatura.value.id,
+    data: nova.value.data,
+    valor: nova.value.estorno ? centavos : -centavos,
+    descricao: nova.value.descricao,
+  });
+  dialogoNova.value.close();
+  avisar("Compra incluída.");
 }
 </script>
 
@@ -179,7 +144,7 @@ async function criar() {
       </div>
     </section>
 
-    <ResumoCompras :compras="compras" @alterada="alterada" @excluida="excluida" />
+    <ResumoCompras :compras="compras" />
   </template>
 
   <dialog ref="dialogoNova" class="dialogo" aria-labelledby="titulo-nova">
@@ -210,7 +175,7 @@ async function criar() {
         </label>
       </div>
       <div class="acoes-dialogo">
-        <button type="submit" class="botao-principal" :disabled="enviando">Incluir</button>
+        <button type="submit" class="botao-principal">Incluir</button>
       </div>
     </form>
   </dialog>

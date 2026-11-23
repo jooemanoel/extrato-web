@@ -5,7 +5,7 @@
 import { computed, reactive, ref } from "vue";
 import Icone from "./Icone.vue";
 import * as api from "../services/api.js";
-import { aposImportar } from "../composables/useDados.js";
+import { sincronizar } from "../composables/useDados.js";
 import { caminhoFatura, ir } from "../composables/useRota.js";
 import { avisar } from "../composables/useAviso.js";
 import { competenciaLonga, dataCurta, dinheiro, plural } from "../formatar.js";
@@ -82,7 +82,7 @@ async function importarUm(item) {
 }
 
 async function terminar() {
-  await aposImportar();
+  await sincronizar(); // traz para o aparelho as faturas e compras importadas
   const feitos = itens.value.filter((i) => i.estado === "importado").length;
   if (feitos) avisar(`${plural(feitos, "arquivo importado", "arquivos importados")}.`);
 }

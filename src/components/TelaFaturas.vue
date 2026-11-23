@@ -4,7 +4,7 @@
 import { computed } from "vue";
 import Icone from "./Icone.vue";
 import * as api from "../services/api.js";
-import { faturas, nomeDoCartao, recarregarCartoes } from "../composables/useDados.js";
+import { faturas, nomeDoCartao, sincronizar } from "../composables/useDados.js";
 import { caminhoFatura, ir } from "../composables/useRota.js";
 import { avisar, avisarErro } from "../composables/useAviso.js";
 import { competenciaCurta, dinheiro, plural } from "../formatar.js";
@@ -22,13 +22,14 @@ const porCartao = computed(() => {
 
 const confere = (f) => (f.situacao === "fechada" && f.totalBanco != null ? f.totalBanco === f.totalCompras : null);
 
+/** Precisa de internet. */
 async function renomear(cartaoId) {
   const atual = nomeDoCartao(cartaoId);
   const nome = prompt("Nome do cartão:", atual)?.trim();
   if (!nome || nome === atual) return;
   try {
     await api.renomearCartao(cartaoId, nome);
-    await recarregarCartoes();
+    await sincronizar();
     avisar("Cartão renomeado.");
   } catch (erro) {
     avisarErro(erro);

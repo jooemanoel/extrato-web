@@ -109,6 +109,7 @@ function excluida(compra) {
         <span class="compra-texto">
           <span class="reticencias compra-nome">{{ nomeDaCompra(c) }}</span>
           <span class="reticencias compra-sub">
+            <span v-if="c.aEnviar" class="a-enviar">a enviar · </span>
             <template v-if="c.parcela">{{ c.parcela.numero }}/{{ c.parcela.total }} · </template>
             <template v-if="mostrarCartao">{{ nomeDoCartao(c.cartaoId) }} · </template>
             {{ c.descricao || c.loja ? c.nomeEstabelecimento : c.pendente ? "sem loja" : "avulsa" }}

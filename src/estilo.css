@@ -1218,3 +1218,34 @@ input[type="search"] {
   padding-top: 14px;
   border-top: 1px solid var(--borda);
 }
+
+/* ---------- aviso de conexão (modo offline) ---------- */
+.aviso-conexao {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  background: var(--superficie-2);
+  color: var(--texto-suave);
+  font-size: 14px;
+}
+
+.aviso-conexao .icone {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  color: var(--alerta);
+}
+
+.aviso-conexao .botao-texto {
+  padding: 0 4px;
+}
+
+/* Compra alterada no aparelho que o servidor ainda não recebeu. */
+.a-enviar {
+  font-style: italic;
+}

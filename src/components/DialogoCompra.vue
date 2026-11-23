@@ -1,13 +1,13 @@
 <script setup>
 // Detalhe e edição de uma compra: apelido, loja escolhida à mão e exclusão.
+// Funciona offline: a alteração aparece na hora e vai para o servidor quando der.
 // Data e valor só mudam em compras digitadas à mão (as do OFX voltariam ao original
 // na próxima importação).
 import { computed, ref, watch } from "vue";
 import Icone from "./Icone.vue";
-import * as api from "../services/api.js";
-import { lojas, nomeDoCartao, recarregarContagem } from "../composables/useDados.js";
+import { alterarCompra, excluirCompra, lojas, nomeDoCartao } from "../composables/useDados.js";
 import { ir } from "../composables/useRota.js";
-import { avisar, avisarErro } from "../composables/useAviso.js";
+import { avisar } from "../composables/useAviso.js";
 import { dataCurta, dinheiro, dinheiroAbsoluto, lerDinheiro } from "../formatar.js";
 
 const props = defineProps({ compra: { type: Object, default: null } });
@@ -19,7 +19,6 @@ const lojaId = ref("");
 const data = ref("");
 const valor = ref("");
 const estorno = ref(false);
-const enviando = ref(false);
 
 const manual = computed(() => props.compra?.origem === "manual");
 const lojasOrdenadas = computed(() => [...lojas.value].sort((a, b) => a.nome.localeCompare(b.nome)));
@@ -59,7 +58,7 @@ function alteracoes() {
   return campos;
 }
 
-async function salvar() {
+function salvar() {
   let campos;
   try {
     campos = alteracoes();
@@ -67,35 +66,19 @@ async function salvar() {
     return avisar(erro.message, "erro");
   }
   if (!Object.keys(campos).length) return emit("fechar");
-  enviando.value = true;
-  try {
-    const alterada = await api.alterarCompra(props.compra.id, campos);
-    emit("alterada", alterada);
-    if ("lojaId" in campos) recarregarContagem();
-    avisar("Compra alterada.");
-  } catch (erro) {
-    avisarErro(erro);
-  } finally {
-    enviando.value = false;
-  }
+  alterarCompra(props.compra.id, campos);
+  emit("alterada", props.compra);
+  avisar("Compra alterada.");
 }
 
-async function excluir() {
+function excluir() {
   const c = props.compra;
   const aviso =
     c.origem === "ofx" ? "\n\nEla volta se o mesmo arquivo OFX for importado de novo." : "";
   if (!confirm(`Excluir a compra ${c.descricao || c.nomeEstabelecimento} (${dinheiroAbsoluto(c.valor)})?${aviso}`)) return;
-  enviando.value = true;
-  try {
-    await api.excluirCompra(c.id);
-    emit("excluida", c);
-    recarregarContagem();
-    avisar("Compra excluída.");
-  } catch (erro) {
-    avisarErro(erro);
-  } finally {
-    enviando.value = false;
-  }
+  excluirCompra(c.id);
+  emit("excluida", c);
+  avisar("Compra excluída.");
 }
 
 function criarLoja() {
@@ -178,8 +161,8 @@ function criarLoja() {
       </button>
 
       <div class="acoes-dialogo">
-        <button type="button" class="botao-secundario perigo" :disabled="enviando" @click="excluir">Excluir</button>
-        <button type="submit" class="botao-principal" :disabled="enviando">Salvar</button>
+        <button type="button" class="botao-secundario perigo" @click="excluir">Excluir</button>
+        <button type="submit" class="botao-principal">Salvar</button>
       </div>
     </form>
   </dialog>

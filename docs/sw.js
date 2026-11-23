@@ -1,8 +1,8 @@
 // Service worker: permite instalar o app e abrir a tela dele sem internet.
 //
 // Só arquivos do próprio app passam por este cache. As respostas da API não passam
-// por aqui: os dados financeiros nunca ficam guardados no aparelho
-// (o app precisa de internet para mostrar as faturas).
+// por aqui: os dados (faturas e compras) quem guarda é o próprio app, no localStorage,
+// para o modo offline (ver src/sincronizacao/nucleo.js).
 //
 // Estratégias:
 //   - Navegação: REDE PRIMEIRO (com limite de 3 s), cache como reserva.
