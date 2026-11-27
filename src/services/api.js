@@ -1,4 +1,4 @@
-// Camada de acesso à extrato-api.
+// Camada de acesso à fatura-api.
 // Os componentes não chamam fetch diretamente: pedem os dados a estas funções.
 import { computed, ref } from "vue";
 import { encerrarSessao, token } from "../composables/useSessao.js";

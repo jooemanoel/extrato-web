@@ -13,7 +13,7 @@
 // sincronizar():
 //   1. envia a fila (POST /sincronizacao); o que foi enviado sai da fila, aceito ou não;
 //   2. pede o que mudou desde o cursor (GET /sincronizacao?desde=) e mescla na base.
-// Reenviar a fila é seguro: a API não duplica nada (ver extrato-api/src/routes/sincronizacao.js).
+// Reenviar a fila é seguro: a API não duplica nada (ver fatura-api/src/routes/sincronizacao.js).
 
 const TAMANHO_LOTE = 200;
 const VAZIA = () => ({ cursor: null, sincronizadoEm: null, categorias: [], cartoes: {}, faturas: {}, compras: {}, lojas: {} });

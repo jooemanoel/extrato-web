@@ -5,7 +5,7 @@ export default defineConfig({
   plugins: [vue()],
 
   // Caminhos relativos: funciona no GitHub Pages em qualquer subpasta
-  // (ex.: https://<usuario>.github.io/extrato-web/).
+  // (ex.: https://<usuario>.github.io/fatura-web/).
   base: "./",
 
   build: {

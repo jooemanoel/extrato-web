@@ -1,6 +1,6 @@
 {
-  "name": "Extrato",
-  "short_name": "Extrato",
+  "name": "Fatura",
+  "short_name": "Fatura",
   "description": "Gastos do cartão de crédito por categoria, a partir das faturas OFX do Banco do Brasil.",
   "lang": "pt-BR",
   "start_url": "./",

@@ -18,7 +18,7 @@ import { aviso } from "./composables/useAviso.js";
 const tituloFatura = ref("");
 
 const titulo = computed(() => {
-  if (!usuario.value) return "Extrato";
+  if (!usuario.value) return "Fatura";
   switch (rota.value.tela) {
     case "faturas":
       return "Faturas";
@@ -46,7 +46,7 @@ watch(
   { immediate: true }
 );
 
-watch(titulo, (t) => (document.title = t === "Extrato" ? "Extrato" : `${t} · Extrato`), { immediate: true });
+watch(titulo, (t) => (document.title = t === "Fatura" ? "Fatura" : `${t} · Fatura`), { immediate: true });
 
 /** Sair apaga do aparelho os dados desta conta. */
 async function sair() {

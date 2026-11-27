@@ -1,12 +1,12 @@
-# Extrato (Vue)
+# Fatura (Vue)
 
 Gastos do cartão de crédito por categoria, a partir das faturas OFX do Banco do Brasil.
 O app pode ser instalado como PWA.
 
 É a reescrita em Vue 3 + Vite do extrato-estatico (Angular), no mesmo padrão do
-[listas-web](../listas-web). Os dados ficam na [extrato-api](../extrato-api), a única que fala
+[listas-web](../listas-web). Os dados ficam na [fatura-api](../fatura-api), a única que fala
 com o Firestore. As regras de negócio estão em
-[extrato-api/docs/MODELAGEM.md](../extrato-api/docs/MODELAGEM.md).
+[fatura-api/docs/MODELAGEM.md](../fatura-api/docs/MODELAGEM.md).
 
 ## Comandos
 
@@ -18,10 +18,10 @@ npm run icones    # gera favicon e ícones do PWA (public/icones) a partir do s�
 ```
 
 Para testar sem credenciais do Firebase, rode a API com dados em memória:
-`cd ../extrato-api && npm run dev:memoria`.
+`cd ../fatura-api && npm run dev:memoria`.
 
 O endereço da API publicada fica em [.env.production](.env.production)
-(`https://extrato-api-nine.vercel.app`). A API precisa aceitar a origem do app em
+(`https://fatura-api-jooemanoel.vercel.app`). A API precisa aceitar a origem do app em
 `CORS_ORIGINS` (`https://jooemanoel.github.io`).
 
 ## Telas
@@ -108,7 +108,7 @@ As lojas e os ignorados valem para **todos os usuários**. A prévia mostra só 
 | `public/sw.js` | Service worker: cache dos arquivos do app |
 | `public/manifest.webmanifest` | Manifesto do PWA |
 | `scripts/gerar-icones.js` | Gera os ícones a partir do Material Symbol `receipt_long` |
-| `src/services/api.js` | Chamadas à extrato-api, com o token no cabeçalho |
+| `src/services/api.js` | Chamadas à fatura-api, com o token no cabeçalho |
 | `src/composables/useSessao.js` | Token JWT e nome do usuário |
 | `src/composables/useDados.js` | Categorias, cartões, faturas, lojas e sugestões compartilhados entre as telas |
 | `src/composables/useRota.js` | Navegação por hash |

@@ -12,7 +12,7 @@
 //
 // Ao mudar este arquivo de forma relevante, troque a VERSAO: o cache antigo é apagado.
 
-const VERSAO = "extrato-app-v1";
+const VERSAO = "extrato-app-v2"; // prefixo do nome antigo; a versão nova força a troca do cache
 
 const ARQUIVOS_INICIAIS = [
   "./",

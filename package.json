@@ -1,5 +1,5 @@
 {
-  "name": "extrato-web",
+  "name": "fatura-web",
   "version": "1.0.0",
   "private": true,
   "description": "Controle dos gastos do cartão de crédito a partir das faturas OFX do Banco do Brasil, feito em Vue.js e instalável como PWA",
